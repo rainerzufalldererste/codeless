@@ -28,7 +28,7 @@ namespace codeless
             arg = arg.Remove(0, 1);
           var breakpoints = new List<int>();
           bool running = !debug;
-          string data = NtfsStream.Read(arg, "0");
+          string data = DataStream.Read(arg, "0");
           Environment.CurrentDirectory = Directory.GetParent(arg).FullName;
           List<string> stack = args.ToList();
           stack.RemoveAt(0);
@@ -82,10 +82,8 @@ namespace codeless
               {
                 switch (s[0])
                 {
-                  case "POPN": stack.RemoveAt(stack.Count() - 1); break;
                   case "FLUSH": stack.Clear(); break;
                   case "CR": Console.WriteLine(); break;
-                  case "RRUN": statementIndex = -1; break;
                   case "EXIT": goto exit;
                 }
               }
@@ -93,47 +91,45 @@ namespace codeless
               {
                 switch (s[0])
                 {
-                  case "CLR": NtfsStream.Delete(arg, s[1]); break;
-                  case "PUTS": Console.Write(NtfsStream.Read(arg, s[1])); break;
-                  case "PUSH": stack.Add(NtfsStream.Read(arg, s[1])); break;
-                  case "PUSHF": stack.Insert(0, NtfsStream.Read(arg, s[1])); break;
-                  case "NOT": stack.Add(_true == NtfsStream.Read(arg, s[1]) ? _false : _true); break;
-                  case "POP": NtfsStream.Write(arg, s[1], stack.Count() > 0 ? stack.Last() : ""); if (stack.Count() > 0) stack.RemoveAt(stack.Count() - 1); break;
-                  case "POPF": NtfsStream.Write(arg, s[1], stack.Count() > 0 ? stack.First() : ""); if (stack.Count() > 0) stack.RemoveAt(stack.Count() - 1); break;
+                  case "CLR": DataStream.Delete(arg, s[1]); break;
+                  case "PUTS": Console.Write(DataStream.Read(arg, s[1])); break;
+                  case "PUSH": stack.Add(DataStream.Read(arg, s[1])); break;
+                  case "PUSHF": stack.Insert(0, DataStream.Read(arg, s[1])); break;
+                  case "NOT": stack.Add(_true == DataStream.Read(arg, s[1]) ? _false : _true); break;
+                  case "POP": DataStream.Write(arg, s[1], stack.Count() > 0 ? stack.Last() : ""); if (stack.Count() > 0) stack.RemoveAt(stack.Count() - 1); break;
+                  case "POPF": DataStream.Write(arg, s[1], stack.Count() > 0 ? stack.First() : ""); if (stack.Count() > 0) stack.RemoveAt(stack.Count() - 1); break;
                   case "CALL": CallFunc(s[1], ref stack); break;
-                  case "IFRRUN": if (NtfsStream.Read(arg, s[1]) == _true) statementIndex = -1; break;
-                  case "IFEXIT": if (NtfsStream.Read(arg, s[1]) == _true) goto exit; break;
-                  case "SETSP": NtfsStream.Write(arg, s[1], " "); break;
+                  case "SETSP": DataStream.Write(arg, s[1], " "); break;
                   case "JMP": statementIndex = int.Parse(s[1]) - 2; break;
-                  case "DJMP": statementIndex = int.Parse(NtfsStream.Read(arg, s[1])) - 2; break;
-                  case "SETIP": NtfsStream.Write(arg, s[1], (statementIndex - 1).ToString()); break;
-                  case "SAT": var v = NtfsStream.Read(arg, s[1]); int x = int.Parse(NtfsStream.Read(arg, s[2])); if (v.Length > x && x >= 0) stack.Add(v[x].ToString()); else stack.Add(""); break;
+                  case "DJMP": statementIndex = int.Parse(DataStream.Read(arg, s[1])) - 2; break;
+                  case "SETIP": DataStream.Write(arg, s[1], (statementIndex - 1).ToString()); break;
                 }
               }
               else if (s.Length == 3)
               {
                 switch (s[0])
                 {
-                  case "SET": NtfsStream.Write(arg, s[1], s[2]); break;
-                  case "MOV": NtfsStream.Write(arg, s[1], NtfsStream.Read(arg, s[2])); break;
-                  case "IADD": stack.Add((int.Parse(NtfsStream.Read(arg, s[1])) + int.Parse(NtfsStream.Read(arg, s[2]))).ToString()); break;
-                  case "ISUB": stack.Add((int.Parse(NtfsStream.Read(arg, s[1])) - int.Parse(NtfsStream.Read(arg, s[2]))).ToString()); break;
-                  case "IMUL": stack.Add((int.Parse(NtfsStream.Read(arg, s[1])) * int.Parse(NtfsStream.Read(arg, s[2]))).ToString()); break;
-                  case "IDIV": stack.Add((int.Parse(NtfsStream.Read(arg, s[1])) / int.Parse(NtfsStream.Read(arg, s[2]))).ToString()); break;
-                  case "SCAT": stack.Add(NtfsStream.Read(arg, s[1]) + NtfsStream.Read(arg, s[2])); break;
-                  case "EQ": stack.Add((NtfsStream.Read(arg, s[1]) == NtfsStream.Read(arg, s[2])) ? _true : _false); break;
-                  case "NE": stack.Add((NtfsStream.Read(arg, s[1]) != NtfsStream.Read(arg, s[2])) ? _true : _false); break;
-                  case "IGCMP": stack.Add((int.Parse(NtfsStream.Read(arg, s[1])) > int.Parse(NtfsStream.Read(arg, s[2]))) ? _true : _false); break;
-                  case "IFCALL": if (NtfsStream.Read(arg, s[1]) == _true) CallFunc(s[2], ref stack); break;
-                  case "IFJMP": if (NtfsStream.Read(arg, s[1]) == _true) statementIndex = int.Parse(s[2]) - 2; break;
-                  case "IFDJMP": if (NtfsStream.Read(arg, s[1]) == _true) statementIndex = int.Parse(NtfsStream.Read(arg, s[2])) - 2; break;
+                  case "SAT": var v = DataStream.Read(arg, s[1]); int x = int.Parse(DataStream.Read(arg, s[2])); if (v.Length > x && x >= 0) stack.Add(v[x].ToString()); else stack.Add(""); break;
+                  case "SET": DataStream.Write(arg, s[1], s[2]); break;
+                  case "MOV": DataStream.Write(arg, s[1], DataStream.Read(arg, s[2])); break;
+                  case "IADD": stack.Add((int.Parse(DataStream.Read(arg, s[1])) + int.Parse(DataStream.Read(arg, s[2]))).ToString()); break;
+                  case "ISUB": stack.Add((int.Parse(DataStream.Read(arg, s[1])) - int.Parse(DataStream.Read(arg, s[2]))).ToString()); break;
+                  case "IMUL": stack.Add((int.Parse(DataStream.Read(arg, s[1])) * int.Parse(DataStream.Read(arg, s[2]))).ToString()); break;
+                  case "IDIV": stack.Add((int.Parse(DataStream.Read(arg, s[1])) / int.Parse(DataStream.Read(arg, s[2]))).ToString()); break;
+                  case "SCAT": stack.Add(DataStream.Read(arg, s[1]) + DataStream.Read(arg, s[2])); break;
+                  case "EQ": stack.Add((DataStream.Read(arg, s[1]) == DataStream.Read(arg, s[2])) ? _true : _false); break;
+                  case "NE": stack.Add((DataStream.Read(arg, s[1]) != DataStream.Read(arg, s[2])) ? _true : _false); break;
+                  case "IGCMP": stack.Add((int.Parse(DataStream.Read(arg, s[1])) > int.Parse(DataStream.Read(arg, s[2]))) ? _true : _false); break;
+                  case "IFCALL": if (DataStream.Read(arg, s[1]) == _true) CallFunc(s[2], ref stack); break;
+                  case "IFJMP": if (DataStream.Read(arg, s[1]) == _true) statementIndex = int.Parse(s[2]) - 2; break;
+                  case "IFDJMP": if (DataStream.Read(arg, s[1]) == _true) statementIndex = int.Parse(DataStream.Read(arg, s[2])) - 2; break;
                 }
               }
               if (s.Length > 1)
               {
                 switch (s[0])
                 {
-                  case "SETS": string a = ""; for (int i = 2; i < s.Length; i++) { a += s[i]; if (i + 1 < s.Length) a += " "; } NtfsStream.Write(arg, s[1], a); break;
+                  case "SETS": string a = ""; for (int i = 2; i < s.Length; i++) { a += s[i]; if (i + 1 < s.Length) a += " "; } DataStream.Write(arg, s[1], a); break;
                 }
               }
             }
@@ -173,29 +169,32 @@ namespace codeless
               {
                 if (e.StartsWith("#"))
                 {
-                  var s = e.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                  if (s.Length == 2)
+                  if (!e.StartsWith("##"))
                   {
-                    switch(s[0])
+                    var s = e.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (s.Length == 2)
                     {
-                      case "#LABEL": labels.Add(s[1], statementIndex + 1); break;
-                      default: Console.WriteLine($"Warning: Invalid Preprocessor Token '{e}'."); break;
+                      switch (s[0])
+                      {
+                        case "#LABEL": labels.Add(s[1], statementIndex + 1); break;
+                        default: Console.WriteLine($"Warning: Invalid Preprocessor Token '{e}'."); break;
+                      }
                     }
-                  }
-                  else if (s.Length == 3)
-                  {
-                    switch (s[0])
+                    else if (s.Length == 3)
                     {
-                      case "#SET": dict.Add(s[1], s[2]); break;
-                      case "#SETX": dict.Add(s[1], s[2].Replace('_', ' ')); break;
-                      case "#AP": dict.Add(s[1], dict[s[1]] + s[2]); break;
-                      case "#APX": dict.Add(s[1], dict[s[1]] + s[2].Replace('_', ' ')); break;
-                      default: Console.WriteLine($"Warning: Invalid Preprocessor Token '{e}'."); break;
+                      switch (s[0])
+                      {
+                        case "#SET": dict.Add(s[1], s[2]); break;
+                        case "#SETX": dict.Add(s[1], s[2].Replace('_', ' ')); break;
+                        case "#AP": dict.Add(s[1], dict[s[1]] + s[2]); break;
+                        case "#APX": dict.Add(s[1], dict[s[1]] + s[2].Replace('_', ' ')); break;
+                        default: Console.WriteLine($"Warning: Invalid Preprocessor Token '{e}'."); break;
+                      }
                     }
-                  }
-                  else
-                  {
-                    Console.WriteLine($"Warning: Invalid Preprocessor Token '{e}'.");
+                    else
+                    {
+                      Console.WriteLine($"Warning: Invalid Preprocessor Token '{e}'.");
+                    }
                   }
                 }
                 else
@@ -213,9 +212,9 @@ namespace codeless
             {
               foreach (var l in labels)
                 a = a.Replace($"${l.Key}", l.Value.ToString());
-              NtfsStream.Write(arg + "!", "0", a);
+              DataStream.Write(arg + "!", "0", a);
               foreach (var v in dict)
-                NtfsStream.Write(arg + "!", v.Key, v.Value);
+                DataStream.Write(arg + "!", v.Key, v.Value);
             }
             catch (Exception) { throw new IOException(); }
           }
@@ -247,7 +246,7 @@ namespace codeless
     {
       foreach (var stream in new FileInfo(arg).ListAlternateDataStreams())
         if (stream.Name != "0")
-          Console.WriteLine($"{stream.Name} = '{NtfsStream.Read(arg, stream.Name)}'");
+          Console.WriteLine($"{stream.Name} = '{DataStream.Read(arg, stream.Name)}'");
       Console.WriteLine("\nStack:\n");
       for (int i = stack.Count() - 1; i >= 0; i--)
         Console.WriteLine($"[{i}]: '{stack[i]}'");
@@ -255,7 +254,7 @@ namespace codeless
   }
 }
 
-public class NtfsStream
+public class DataStream
 {
   const string SubStreamMask = ":";
   public static string Read(string file, string stream)

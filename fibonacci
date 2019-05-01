@@ -1,22 +1,36 @@
+## Print the Fibonacci Sequence
+
+## Static Compile-Time Variables.
 #SETX sep ,_
 #SET null 0
 #SET two 2
-#LABEL main
+
+## Set Runtime Variables.
 SET it 32
 SET r0 0
 SET r1 1
+
+## Print Values.
 #LABEL loop
 PUTS r0
 PUTS sep
 PUTS r1
 PUTS sep
+
+## Calculate Next Values.
 IADD r0 r1
 POP r0
 IADD r0 r1
 POP r1
+
+## Do we want to print more values?
 ISUB it two
 POP it
 IGCMP it null
 POP continue
+
+## If yes: goto loop.
 IFJMP continue $loop
+
+## Else: Exit.
 EXIT
