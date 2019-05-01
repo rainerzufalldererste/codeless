@@ -27,11 +27,10 @@ namespace codeless
           string data = NtfsStream.Read(arg, "0");
           Environment.CurrentDirectory = Directory.GetParent(arg).FullName;
           List<string> stack = args.ToList();
-          restart:
-          int statementIndex = 0;
-          foreach (var e in data.Split(new char[] { ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+          var instructions = data.Split(new char[] { ';', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+          for (int statementIndex = 0; statementIndex < instructions.Length && statementIndex >= 0; ++statementIndex)
           {
-            ++statementIndex;
+            var e = instructions[statementIndex];
             try
             {
               var s = e.Split(' ');
@@ -42,7 +41,7 @@ namespace codeless
                   case "POPN": stack.RemoveAt(stack.Count() - 1); break;
                   case "FLUSH": stack.Clear(); break;
                   case "CR": Console.WriteLine(); break;
-                  case "RRUN": goto restart;
+                  case "RRUN": statementIndex = -1; break;
                   case "EXIT": goto exit;
                 }
               }
@@ -53,12 +52,16 @@ namespace codeless
                   case "CLRL": NtfsStream.Delete(arg, s[1]); break;
                   case "PUTS": Console.Write(NtfsStream.Read(arg, s[1])); break;
                   case "PUSH": stack.Add(NtfsStream.Read(arg, s[1])); break;
+                  case "PUSHF": stack.Insert(0, NtfsStream.Read(arg, s[1])); break;
                   case "NOT": stack.Add(_true == NtfsStream.Read(arg, s[1]) ? _false : _true); break;
                   case "POP": NtfsStream.Write(arg, s[1], stack.Count() > 0 ? stack.Last() : ""); if (stack.Count() > 0) stack.RemoveAt(stack.Count() - 1); break;
+                  case "POPF": NtfsStream.Write(arg, s[1], stack.Count() > 0 ? stack.First() : ""); if (stack.Count() > 0) stack.RemoveAt(stack.Count() - 1); break;
                   case "CALL": CallFunc(s[1], ref stack); break;
-                  case "IFRRUN": if (NtfsStream.Read(arg, s[1]) == _true) goto restart; break;
+                  case "IFRRUN": if (NtfsStream.Read(arg, s[1]) == _true) statementIndex = -1; break;
                   case "IFEXIT": if (NtfsStream.Read(arg, s[1]) == _true) goto exit; break;
                   case "SETSP": NtfsStream.Write(arg, s[1], " "); break;
+                  case "JMP": statementIndex = int.Parse(s[1]) - 2; break;
+                  case "DJMP": statementIndex = int.Parse(NtfsStream.Read(arg, s[1])) - 2; break;
                 }
               }
               else if (s.Length == 3)
@@ -75,6 +78,8 @@ namespace codeless
                   case "NE": stack.Add((NtfsStream.Read(arg, s[1]) != NtfsStream.Read(arg, s[2])) ? _true : _false); break;
                   case "IGCMP": stack.Add((int.Parse(NtfsStream.Read(arg, s[1])) > int.Parse(NtfsStream.Read(arg, s[2]))) ? _true : _false); break;
                   case "IFCALL": if (NtfsStream.Read(arg, s[1]) == _true) CallFunc(s[2], ref stack); break;
+                  case "IFJMP": if (NtfsStream.Read(arg, s[1]) == _true) statementIndex = int.Parse(s[2]) - 2; break;
+                  case "IFDJMP": if (NtfsStream.Read(arg, s[1]) == _true) statementIndex = int.Parse(NtfsStream.Read(arg, s[2])) - 2; break;
                 }
               }
               if (s.Length > 1)
