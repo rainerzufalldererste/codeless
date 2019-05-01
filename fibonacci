@@ -1,34 +1,22 @@
+#SETX sep ,_
+#SET null 0
+#SET two 2
+#LABEL main
 SET it 32
 SET r0 0
 SET r1 1
-PUSHF r1
-PUSHF r0
-PUSHF it
-POP r1
-POP r0
-POP it
-SETS sep ,
-SETSP sp
+#LABEL loop
 PUTS r0
 PUTS sep
-PUTS sp
 PUTS r1
 PUTS sep
-PUTS sp
 IADD r0 r1
 POP r0
 IADD r0 r1
 POP r1
-SET two 2
 ISUB it two
 POP it
-SET null 0
 IGCMP it null
 POP continue
-NOT continue
-POP continue
-IFEXIT continue
-PUSH it
-PUSH r0
-PUSH r1
-JMP 7
+IFJMP continue $loop
+EXIT
